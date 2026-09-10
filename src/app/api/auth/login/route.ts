@@ -60,10 +60,11 @@ export async function POST(req: Request) {
       role: user.role,
       redirectTo: user.role === "ADMIN" ? "/admin/users" : "/dashboard",
     });
-  } catch (error) {
+  } catch (error: unknown) {
     console.error("Error en login:", error);
+    const message = error instanceof Error ? error.message : String(error);
     return NextResponse.json(
-      { error: "Error interno al iniciar sesión." },
+      { error: "Error interno al iniciar sesión.", details: message },
       { status: 500 }
     );
   }

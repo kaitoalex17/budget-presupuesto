@@ -225,7 +225,9 @@ export async function ensureDatabaseInitialized() {
     }
 
     isDbInitialized = true;
+    return { success: true };
   } catch (err) {
     console.error("Error al auto-inicializar base de datos:", err);
+    throw err;
   }
 }

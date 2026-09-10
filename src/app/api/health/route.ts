@@ -9,15 +9,18 @@ export async function GET() {
     // Asegurar que las tablas existan automáticamente
     await ensureDatabaseInitialized();
     await prisma.$queryRaw`SELECT 1`;
+    const userCount = await prisma.user.count();
 
     return NextResponse.json({
       status: "ok",
+      userCount,
       timestamp: new Date().toISOString(),
       service: "budget-presupuesto",
     });
-  } catch (error) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error);
     return NextResponse.json(
-      { status: "error", message: "Database connection failure", error: String(error) },
+      { status: "error", message: "Database check failure", error: message },
       { status: 500 }
     );
   }
