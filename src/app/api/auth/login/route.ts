@@ -1,9 +1,13 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/db";
 import { verifyPassword, setSessionCookie } from "@/lib/auth";
+import { ensureDatabaseInitialized } from "@/lib/initDb";
+
+export const dynamic = "force-dynamic";
 
 export async function POST(req: Request) {
   try {
+    await ensureDatabaseInitialized();
     const { email, password } = await req.json();
 
     if (!email || !password) {

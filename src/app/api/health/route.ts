@@ -1,10 +1,15 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/db";
+import { ensureDatabaseInitialized } from "@/lib/initDb";
+
+export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
-    // Verificar conexión con la base de datos
+    // Asegurar que las tablas existan automáticamente
+    await ensureDatabaseInitialized();
     await prisma.$queryRaw`SELECT 1`;
+
     return NextResponse.json({
       status: "ok",
       timestamp: new Date().toISOString(),
