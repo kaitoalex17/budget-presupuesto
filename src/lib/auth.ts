@@ -87,7 +87,6 @@ export async function getCurrentUser(): Promise<AuthSession | null> {
       credits: user.credits,
       isFlatRate: user.isFlatRate,
       companyName: user.companyName,
-      logo: user.logo,
     };
   } catch {
     return null;

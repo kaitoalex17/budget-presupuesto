@@ -36,5 +36,4 @@ export interface AuthSession {
   credits: number;
   isFlatRate: boolean;
   companyName?: string | null;
-  logo?: string | null;
 }

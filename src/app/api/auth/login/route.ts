@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/db";
-import { verifyPassword, setSessionCookie } from "@/lib/auth";
+import { verifyPassword, signSessionToken } from "@/lib/auth";
 import { ensureDatabaseInitialized } from "@/lib/initDb";
 
 export const dynamic = "force-dynamic";
@@ -43,8 +43,8 @@ export async function POST(req: Request) {
       );
     }
 
-    // Establecer sesión segura
-    await setSessionCookie({
+    // Firmar token de sesión ligero (sin imágenes ni datos pesados)
+    const token = await signSessionToken({
       userId: user.id,
       email: user.email,
       name: user.name,
@@ -52,14 +52,23 @@ export async function POST(req: Request) {
       credits: user.credits,
       isFlatRate: user.isFlatRate,
       companyName: user.companyName,
-      logo: user.logo,
     });
 
-    return NextResponse.json({
+    const response = NextResponse.json({
       success: true,
       role: user.role,
       redirectTo: user.role === "ADMIN" ? "/admin/users" : "/dashboard",
     });
+
+    response.cookies.set("budget_session", token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      path: "/",
+      maxAge: 60 * 60 * 24 * 30, // 30 días
+    });
+
+    return response;
   } catch (error: unknown) {
     console.error("Error en login:", error);
     const message = error instanceof Error ? error.message : String(error);
