@@ -1,0 +1,58 @@
+# ===================================================
+# Stage 1: Dependencias base
+# ===================================================
+FROM node:20-alpine AS deps
+RUN apk add --no-cache libc6-compat
+WORKDIR /app
+
+COPY package.json package-lock.json* ./
+COPY prisma ./prisma/
+RUN npm ci
+
+# ===================================================
+# Stage 2: Construcción (Builder)
+# ===================================================
+FROM node:20-alpine AS builder
+WORKDIR /app
+
+COPY --from=deps /app/node_modules ./node_modules
+COPY . .
+
+# Generar cliente de Prisma y compilar Next.js en modo standalone
+ENV NEXT_TELEMETRY_DISABLED=1
+ENV NODE_ENV=production
+RUN npx prisma generate
+RUN npm run build
+
+# ===================================================
+# Stage 3: Imagen Final de Producción (Runner)
+# ===================================================
+FROM node:20-alpine AS runner
+WORKDIR /app
+
+ENV NODE_ENV=production
+ENV NEXT_TELEMETRY_DISABLED=1
+ENV PORT=3000
+ENV HOSTNAME="0.0.0.0"
+
+# Crear usuario seguro sin privilegios
+RUN addgroup --system --gid 1001 nodejs && \
+    adduser --system --uid 1001 nextjs
+
+# Crear directorio de datos para SQLite y ajustar permisos
+RUN mkdir -p /app/prisma/data && chown -R nextjs:nodejs /app/prisma/data
+
+# Copiar artefactos de compilación standalone
+COPY --from=builder /app/public ./public
+COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma
+COPY --from=builder --chown=nextjs:nodejs /app/node_modules/.prisma ./node_modules/.prisma
+COPY --from=builder --chown=nextjs:nodejs /app/node_modules/@prisma ./node_modules/@prisma
+
+# Script de entrada para inicializar la base de datos si no existe
+USER nextjs
+
+EXPOSE 3000
+
+CMD ["sh", "-c", "npx prisma db push --skip-generate && npx tsx prisma/seed.ts || true && node server.js"]

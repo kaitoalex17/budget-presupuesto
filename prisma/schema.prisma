@@ -1,0 +1,170 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                 String              @id @default(cuid())
+  email              String              @unique
+  password           String
+  role               String              @default("USER") // "ADMIN" | "USER"
+  name               String
+  companyName        String?
+  nif                String?
+  phone              String?
+  address            String?
+  logo               String?             // Base64 Data URL o ruta de imagen
+  credits            Int                 @default(10)     // Puntos para crear presupuestos
+  isFlatRate         Boolean             @default(false)  // Tarifa plana activa (ilimitados)
+  isActive           Boolean             @default(true)
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+
+  settings           ProfileSettings?
+  clients            Client[]
+  budgets            Budget[]
+  savedConcepts      SavedConcept[]
+  invoices           Invoice[]
+  creditTransactions CreditTransaction[]
+}
+
+model ProfileSettings {
+  id                   String   @id @default(cuid())
+  userId               String   @unique
+  budgetPrefix         String   @default("PRES-")
+  nextBudgetSeq        Int      @default(1)
+  invoicePrefix        String   @default("FAC-")
+  nextInvoiceSeq       Int      @default(1)
+  defaultValidityDays  Int      @default(30)
+  defaultPaymentMethod String   @default("TRANSFERENCIA") // "EFECTIVO", "TRANSFERENCIA", "TARJETA", etc.
+  bankName             String?
+  bankAccountIban      String?
+  bankAccountHolder    String?
+  defaultPaymentTerms  String?  // JSON string con desglose de cuotas por defecto
+  defaultLegalTerms    String?  // Texto de condiciones contractuales para la hoja 2
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  user                 User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Client {
+  id        String    @id @default(cuid())
+  userId    String
+  name      String
+  company   String?
+  nif       String?
+  email     String?
+  phone     String?
+  address   String?
+  notes     String?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  budgets   Budget[]
+  invoices  Invoice[]
+}
+
+model Budget {
+  id             String       @id @default(cuid())
+  userId         String
+  clientId       String?
+  budgetNumber   String       // Secuencial por perfil: PRES-2026-0001
+  title          String       // Resumen o título del proyecto/obra
+  issueDate      DateTime     @default(now())
+  validUntil     DateTime
+  status         String       @default("BORRADOR") // "BORRADOR" | "ENVIADO" | "VISTO" | "ACEPTADO" | "RECHAZADO" | "FACTURADO"
+  publicToken    String       @unique // Token único para acceso del cliente (/p/[token])
+  tokenExpiresAt DateTime?
+  currency       String       @default("EUR")
+  subtotal       Float        @default(0)
+  applyTax       Boolean      @default(true)
+  taxRate        Float        @default(21.0)
+  taxAmount      Float        @default(0)
+  irpfRate       Float        @default(0)
+  irpfAmount     Float        @default(0)
+  discount       Float        @default(0)
+  total          Float        @default(0)
+  paymentMethod  String?
+  paymentTerms   String?      // JSON string con desglose de plazos (ej. 50% inicio, 50% fin)
+  legalTerms     String?      // Condiciones legales para hoja 2 independiente
+  clientNotes    String?      // Comentarios u objeciones del cliente en la vista pública
+  signedAt       DateTime?
+  signerName     String?
+  signatureImage String?      // Firma digital en formato PNG Base64
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  client         Client?      @relation(fields: [clientId], references: [id], onDelete: SetNull)
+  items          BudgetItem[]
+  invoice        Invoice?
+}
+
+model BudgetItem {
+  id          String   @id @default(cuid())
+  budgetId    String
+  type        String   @default("UNIDAD") // "UNIDAD" (cantidad x precio) o "PARTIDA" (alzada)
+  concept     String
+  description String?
+  quantity    Float    @default(1)
+  unitPrice   Float    @default(0)
+  amount      Float    @default(0)
+  order       Int      @default(0)
+
+  budget      Budget   @relation(fields: [budgetId], references: [id], onDelete: Cascade)
+}
+
+model SavedConcept {
+  id           String   @id @default(cuid())
+  userId       String
+  title        String
+  description  String?
+  defaultPrice Float    @default(0)
+  type         String   @default("UNIDAD") // "UNIDAD" o "PARTIDA"
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Invoice {
+  id            String    @id @default(cuid())
+  userId        String
+  budgetId      String?   @unique
+  clientId      String?
+  invoiceNumber String    // Secuencial: FAC-2026-0001
+  issueDate     DateTime  @default(now())
+  dueDate       DateTime?
+  subtotal      Float     @default(0)
+  taxRate       Float     @default(21.0)
+  taxAmount     Float     @default(0)
+  irpfRate      Float     @default(0)
+  irpfAmount    Float     @default(0)
+  total         Float     @default(0)
+  status        String    @default("EMITIDA") // "EMITIDA" | "PAGADA" | "ANULADA"
+  notes         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  budget        Budget?   @relation(fields: [budgetId], references: [id], onDelete: SetNull)
+  client        Client?   @relation(fields: [clientId], references: [id], onDelete: SetNull)
+}
+
+model CreditTransaction {
+  id        String   @id @default(cuid())
+  userId    String
+  adminId   String?
+  amount    Int      // Positivo (recarga) o negativo (consumo)
+  type      String   // "RECARGA" | "CONSUMO" | "TARIFA_PLANA_ACTIVA" | "TARIFA_PLANA_DESACTIVA" | "AJUSTE"
+  notes     String?
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
