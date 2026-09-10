@@ -1,8 +1,15 @@
 # 💼 Presupuestos Pro - SaaS de Presupuestos, Firma Digital y Facturación
 
-Plataforma ágil y profesional diseñada para autónomos, constructoras, instaladores y agencias que necesitan generar presupuestos en PDF de alta calidad, compartirlos por WhatsApp, recabar firmas digitales en línea con valor contractual y convertirlos automáticamente en facturas oficiales correlativas.
+Plataforma ágil y profesional diseñada para autónomos, empresas instaladoras, reformas y agencias que necesitan generar presupuestos en PDF de alta calidad, compartirlos por WhatsApp, recabar firmas digitales en línea con valor contractual y convertirlos automáticamente en facturas oficiales correlativas.
 
-Desarrollada para correr directamente sobre **Linux / Portainer** mediante Docker Compose, sincronizada con GitHub y preparada para integrarse fácilmente en sistemas superiores.
+Desarrollada para correr sobre **Linux / Portainer** mediante Docker Compose con PostgreSQL, sincronizada con GitHub y preparada para integrarse fácilmente en sistemas superiores.
+
+---
+
+## 🔌 Puertos de Despliegue (Desplazados +25)
+
+- **Portal Web / SaaS:** Puerto **`3025`** *(3000 + 25)* ➔ `http://<ip-servidor>:3025`
+- **Base de Datos (PostgreSQL):** Puerto **`5457`** *(5432 + 25)* ➔ Conectable externamente para tu ecosistema
 
 ---
 
@@ -36,14 +43,12 @@ Desarrollada para correr directamente sobre **Linux / Portainer** mediante Docke
   - Exportador a CSV / Excel con formato estándar para tu asesoría o gestoría contable.
 - **Diseño Mobile-First y Temas:**
   - Barra de navegación táctil inferior en móviles.
-  - Barra lateral completa y tablas de datos en PC.
+  - Barra lateral completa y tablas de alta densidad en ordenadores.
   - Selector de modo Claro y Oscuro con persistencia automática.
 
 ---
 
 ## 🛠️ Despliegue en Portainer (Linux)
-
-La aplicación incluye `Dockerfile` multi-stage optimizado y `docker-compose.yml` con volumen persistente para SQLite.
 
 Consulta el manual paso a paso en [PORTAINER_DEPLOY.md](./PORTAINER_DEPLOY.md) para desplegar como Stack conectado directamente a este repositorio GitHub:
 `https://github.com/kaitoalex17/budget-presupuesto`
@@ -57,21 +62,3 @@ Consulta el manual paso a paso en [PORTAINER_DEPLOY.md](./PORTAINER_DEPLOY.md) p
 ## 📐 Documentación de Arquitectura e Integración
 
 Para conocer la estructura modular del código y cómo integrarlo en una plataforma mayor (ERP, CRM o Suite Empresarial), consulta [ARCHITECTURE.md](./ARCHITECTURE.md).
-
----
-
-## 💻 Desarrollo Local
-
-```bash
-# Instalar dependencias
-npm install
-
-# Inicializar base de datos y seed
-npx prisma generate
-npx prisma db push
-npm run prisma:seed
-
-# Iniciar servidor de desarrollo
-npm run dev
-```
-Accede a `http://localhost:3000`.

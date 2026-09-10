@@ -3,6 +3,8 @@ import prisma from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 import { ConceptsClient } from "./ConceptsClient";
 
+export const dynamic = "force-dynamic";
+
 export default async function ConceptsPage() {
   const user = await getCurrentUser();
   if (!user) return null;

@@ -3,6 +3,8 @@ import { notFound } from "next/navigation";
 import prisma from "@/lib/db";
 import { PublicBudgetView } from "./PublicBudgetView";
 
+export const dynamic = "force-dynamic";
+
 export default async function PublicPage({
   params,
 }: {

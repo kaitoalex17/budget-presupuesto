@@ -4,6 +4,8 @@ import { getCurrentUser } from "@/lib/auth";
 import { Receipt, Download, FileSpreadsheet, ArrowUpRight } from "lucide-react";
 import Link from "next/link";
 
+export const dynamic = "force-dynamic";
+
 export default async function InvoicesPage() {
   const user = await getCurrentUser();
   if (!user) return null;

@@ -1,28 +1,55 @@
 services:
+  # ----------------------------------------------------
+  # Base de Datos PostgreSQL
+  # Puerto expuesto: 5457 (5432 + 25)
+  # ----------------------------------------------------
+  budget-db:
+    image: postgres:16-alpine
+    container_name: budget-postgres
+    restart: unless-stopped
+    ports:
+      - "5457:5432"
+    environment:
+      POSTGRES_DB: budget_db
+      POSTGRES_USER: budget_user
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-budget_password_2026}
+    volumes:
+      - budget_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U budget_user -d budget_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ----------------------------------------------------
+  # Aplicación Web / Portal SaaS
+  # Puerto expuesto: 3025 (3000 + 25)
+  # ----------------------------------------------------
   budget-app:
     build:
       context: .
       dockerfile: Dockerfile
     container_name: budget-presupuesto
     restart: unless-stopped
+    depends_on:
+      budget-db:
+        condition: service_healthy
     ports:
-      - "3000:3000"
+      - "3025:3025"
     environment:
       - NODE_ENV=production
-      - DATABASE_URL=file:/app/prisma/data/budget.db
+      - DATABASE_URL=postgresql://budget_user:${DB_PASSWORD:-budget_password_2026}@budget-db:5432/budget_db?schema=public
       - JWT_SECRET=${JWT_SECRET:-super-secret-jwt-key-change-in-production-2026}
-      - NEXT_PUBLIC_APP_URL=${NEXT_PUBLIC_APP_URL:-http://localhost:3000}
+      - NEXT_PUBLIC_APP_URL=${NEXT_PUBLIC_APP_URL:-http://localhost:3025}
       - OPENAI_API_KEY=${OPENAI_API_KEY:-}
-      - PORT=3000
-    volumes:
-      - budget_data:/app/prisma/data
+      - PORT=3025
     healthcheck:
-      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:3000/api/health || exit 1"]
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:3025/api/health || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 20s
+      start_period: 25s
 
 volumes:
-  budget_data:
+  budget_db_data:
     driver: local

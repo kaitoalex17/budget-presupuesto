@@ -3,6 +3,8 @@ import prisma from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 import { BudgetsClient } from "./BudgetsClient";
 
+export const dynamic = "force-dynamic";
+
 export default async function BudgetsPage() {
   const user = await getCurrentUser();
   if (!user) return null;

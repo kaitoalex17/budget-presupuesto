@@ -2,6 +2,8 @@ import React from "react";
 import prisma from "@/lib/db";
 import { AdminUsersClient } from "./AdminUsersClient";
 
+export const dynamic = "force-dynamic";
+
 export default async function AdminUsersPage() {
   const [users, transactions] = await Promise.all([
     prisma.user.findMany({
