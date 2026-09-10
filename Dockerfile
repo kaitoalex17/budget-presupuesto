@@ -7,7 +7,7 @@ WORKDIR /app
 
 COPY package.json package-lock.json* ./
 COPY prisma ./prisma/
-RUN npm ci
+RUN npm ci --no-audit --no-fund
 
 # ===================================================
 # Stage 2: Construcción (Builder)
