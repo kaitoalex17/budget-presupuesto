@@ -38,16 +38,14 @@ ENV HOSTNAME="0.0.0.0"
 RUN addgroup --system --gid 1001 nodejs && \
     adduser --system --uid 1001 nextjs
 
-# Copiar artefactos de compilación standalone
 COPY --from=builder /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma
-COPY --from=builder --chown=nextjs:nodejs /app/node_modules/.prisma ./node_modules/.prisma
-COPY --from=builder --chown=nextjs:nodejs /app/node_modules/@prisma ./node_modules/@prisma
+COPY --from=deps --chown=nextjs:nodejs /app/node_modules ./node_modules
 
 USER nextjs
 
 EXPOSE 3025
 
-CMD ["sh", "-c", "npx prisma db push --skip-generate && npx tsx prisma/seed.ts || true && node server.js"]
+CMD ["sh", "-c", "./node_modules/.bin/prisma db push --accept-data-loss && ./node_modules/.bin/tsx prisma/seed.ts || true; node server.js"]
