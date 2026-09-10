@@ -26,7 +26,7 @@ services:
   # Puerto expuesto: 3025 (3000 + 25)
   # ----------------------------------------------------
   budget-app:
-    image: budget-presupuesto:latest
+    image: ghcr.io/kaitoalex17/budget-presupuesto:latest
     build:
       context: .
       dockerfile: Dockerfile
