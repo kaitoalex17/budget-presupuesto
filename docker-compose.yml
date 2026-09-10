@@ -45,11 +45,11 @@ services:
       - OPENAI_API_KEY=${OPENAI_API_KEY:-}
       - PORT=3025
     healthcheck:
-      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:3025/api/health || exit 1"]
-      interval: 30s
-      timeout: 10s
+      test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1:3025/api/health || exit 1"]
+      interval: 10s
+      timeout: 5s
       retries: 3
-      start_period: 25s
+      start_period: 5s
 
 volumes:
   budget_db_data:
